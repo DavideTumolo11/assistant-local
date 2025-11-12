@@ -1,28 +1,25 @@
 @echo off
-title JARVIS - Stop Sistema
+title JARVIS - Stop
 color 0C
+cls
 echo.
-echo ========================================================
-echo              JARVIS AI ASSISTANT - STOP
-echo ========================================================
-echo.
-echo Chiusura componenti JARVIS in corso...
+echo ============================================
+echo        CHIUSURA J.A.R.V.I.S
+echo ============================================
 echo.
 
-REM Chiudi server Python WebSocket
-echo [1/2] Chiudo server WebSocket...
+echo Chiudo server Python...
 taskkill /FI "WINDOWTITLE eq JARVIS Backend*" /F >nul 2>&1
 taskkill /IM python.exe /F >nul 2>&1
-echo [OK] Server Python chiuso
+echo OK!
 
-REM Chiudi Electron
-echo [2/2] Chiudo interfaccia Electron...
+echo Chiudo interfaccia Electron...
 taskkill /IM electron.exe /F >nul 2>&1
-echo [OK] Interfaccia Electron chiusa
+echo OK!
 
 echo.
-echo ========================================================
-echo           JARVIS TERMINATO COMPLETAMENTE
-echo ========================================================
+echo ============================================
+echo       JARVIS FERMATO COMPLETAMENTE
+echo ============================================
 echo.
-timeout /t 3
+timeout /t 2

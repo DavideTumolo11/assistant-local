@@ -1,126 +1,110 @@
 @echo off
-title JARVIS AI Assistant - Avvio Sistema
+title JARVIS - Avvio Sistema
 color 0B
+cls
 echo.
-echo ========================================================
-echo           JARVIS AI ASSISTANT - AVVIO SISTEMA
-echo                    BY DAVIDE TUMOLO
-echo ========================================================
+echo ============================================
+echo        J.A.R.V.I.S AI ASSISTANT
+echo ============================================
 echo.
 
-REM Vai nella directory del progetto
+REM Vai sempre nella cartella dove si trova questo .bat
 cd /d "%~dp0"
 
-REM ============================================
-REM STEP 1: Controlla Python
-REM ============================================
-echo [1/5] Verifica Python...
+echo Percorso progetto: %CD%
+echo.
+
+REM ===== CHECK PYTHON =====
+echo [1/4] Controllo Python...
 python --version >nul 2>&1
 if errorlevel 1 (
+    color 0C
     echo.
-    echo [ERRORE] Python non trovato!
+    echo [ERRORE] Python NON trovato!
     echo.
-    echo Installa Python da: https://www.python.org/downloads/
-    echo IMPORTANTE: Spunta "Add Python to PATH" durante installazione!
+    echo Scarica Python da: https://www.python.org/downloads/
+    echo IMPORTANTE: Spunta "Add Python to PATH"!
     echo.
     pause
     exit /b 1
 )
-echo [OK] Python trovato
+python --version
+echo OK!
 echo.
 
-REM ============================================
-REM STEP 2: Controlla/Crea ambiente virtuale
-REM ============================================
-echo [2/5] Verifica ambiente virtuale...
+REM ===== CHECK NODE.JS =====
+echo [2/4] Controllo Node.js...
+npm --version >nul 2>&1
+if errorlevel 1 (
+    color 0C
+    echo.
+    echo [ERRORE] Node.js NON trovato!
+    echo.
+    echo Scarica Node.js da: https://nodejs.org/
+    echo.
+    pause
+    exit /b 1
+)
+npm --version
+echo OK!
+echo.
+
+REM ===== AMBIENTE VIRTUALE =====
+echo [3/4] Ambiente virtuale Python...
 if not exist ".venv" (
-    echo [INFO] Ambiente virtuale non trovato, lo creo...
+    echo Creo ambiente virtuale...
     python -m venv .venv
     if errorlevel 1 (
-        echo [ERRORE] Impossibile creare ambiente virtuale!
+        color 0C
+        echo ERRORE nella creazione!
         pause
         exit /b 1
     )
-    echo [OK] Ambiente virtuale creato
-) else (
-    echo [OK] Ambiente virtuale trovato
+    echo Creato!
 )
-echo.
 
-REM ============================================
-REM STEP 3: Attiva ambiente virtuale
-REM ============================================
-echo [3/5] Attivazione ambiente virtuale...
+echo Attivo ambiente virtuale...
 call .venv\Scripts\activate.bat
 if errorlevel 1 (
-    echo [ERRORE] Impossibile attivare ambiente virtuale!
+    color 0C
+    echo ERRORE nell'attivazione!
     pause
     exit /b 1
 )
-echo [OK] Ambiente virtuale attivo
+echo OK!
 echo.
 
-REM ============================================
-REM STEP 4: Installa dipendenze Python
-REM ============================================
-echo [4/5] Verifica dipendenze Python...
-pip show websockets >nul 2>&1
-if errorlevel 1 (
-    echo [INFO] Installo dipendenze Python (potrebbe richiedere alcuni minuti)...
-    pip install websockets
-    if errorlevel 1 (
-        echo [WARNING] Alcune dipendenze potrebbero non essere installate
-        echo Il sistema funzionera' in modalita' base
-    )
-) else (
-    echo [OK] Dipendenze base trovate
-)
+REM ===== DIPENDENZE =====
+echo [4/4] Installo websockets (se mancante)...
+pip install websockets >nul 2>&1
+echo OK!
 echo.
 
-REM ============================================
-REM STEP 5: Verifica Node.js/npm
-REM ============================================
-echo [5/5] Verifica Node.js...
-npm --version >nul 2>&1
-if errorlevel 1 (
-    echo.
-    echo [ERRORE] Node.js/npm non trovato!
-    echo.
-    echo Installa Node.js da: https://nodejs.org/
-    echo.
-    pause
-    exit /b 1
-)
-echo [OK] Node.js trovato
+REM ===== AVVIO JARVIS =====
+echo ============================================
+echo           AVVIO COMPONENTI
+echo ============================================
 echo.
 
-REM ============================================
-REM AVVIO JARVIS
-REM ============================================
-echo ========================================================
-echo                  AVVIO COMPONENTI JARVIS
-echo ========================================================
+echo [BACKEND] Avvio server WebSocket (porta 8765)...
+start "JARVIS Backend" cmd /k "cd /d %CD% && call .venv\Scripts\activate.bat && python server\websocket_server.py"
+echo Avviato!
 echo.
 
-echo [BACKEND] Avvio server WebSocket Python (porta 8765)...
-echo.
-start "JARVIS Backend - WebSocket Server" cmd /k "python server\websocket_server.py"
-
-echo [INFO] Attendo 3 secondi per avvio backend...
+echo Attendo 3 secondi per il backend...
 timeout /t 3 /nobreak >nul
 echo.
 
 echo [FRONTEND] Avvio interfaccia Electron...
-echo.
 npm start
 
-REM Se Electron si chiude, chiudi anche il backend
+REM Quando chiudi Electron, chiudi anche il backend
 echo.
-echo [INFO] Interfaccia chiusa. Chiudo componenti...
+echo Chiusura componenti...
 taskkill /FI "WINDOWTITLE eq JARVIS Backend*" /F >nul 2>&1
+
 echo.
-echo ========================================================
-echo              JARVIS TERMINATO CORRETTAMENTE
-echo ========================================================
-echo.
+echo ============================================
+echo         JARVIS CHIUSO CORRETTAMENTE
+echo ============================================
 pause
