@@ -8,9 +8,9 @@ Set fso = CreateObject("Scripting.FileSystemObject")
 ' Ottieni la cartella dove si trova questo file .vbs
 scriptFolder = fso.GetParentFolderName(WScript.ScriptFullName)
 
-' Avvia start_jarvis.bat in modo invisibile
-' Parametro 0 = finestra nascosta
-WshShell.Run """" & scriptFolder & "\start_jarvis.bat""", 0, False
+' Avvia start_jarvis.bat tramite CMD in modo invisibile
+' Parametro 0 = finestra nascosta, False = non aspettare
+WshShell.Run "cmd.exe /c """ & scriptFolder & "\start_jarvis.bat""", 0, False
 
 ' Per fermare JARVIS in modalità stealth:
 ' - Esegui stop_jarvis.bat
