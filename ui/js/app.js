@@ -97,6 +97,9 @@ class JarvisApp {
             this.debugLog('📋 Setting up DOM elements...');
             this.setupElements();
 
+            this.debugLog('📊 Animating loading progress...');
+            this.animateLoadingProgress();
+
             this.debugLog('✨ Setting up particles...');
             this.setupParticles();
 
@@ -1110,10 +1113,48 @@ class JarvisApp {
     }
 
     /**
+     * ✅ ANIMA PROGRESS BAR E LOADING SEGMENTS
+     */
+    animateLoadingProgress() {
+        // Anima la barra di progresso
+        if (this.elements.loadingProgress) {
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15 + 10; // Incrementa tra 10-25%
+                if (progress >= 95) {
+                    progress = 95; // Fermati al 95%, completa al 100% quando tutto è pronto
+                    clearInterval(progressInterval);
+                }
+                this.elements.loadingProgress.style.width = `${progress}%`;
+                this.debugLog(`📊 Loading progress: ${progress.toFixed(0)}%`);
+            }, 200);
+        }
+
+        // Anima i segmenti sugli anelli
+        const segments = document.querySelectorAll('.loading-segment, .loading-segment-outer');
+        if (segments.length > 0) {
+            segments.forEach((segment, index) => {
+                setTimeout(() => {
+                    segment.classList.add('loading');
+                    setTimeout(() => {
+                        segment.classList.remove('loading');
+                        segment.classList.add('completed');
+                    }, 500);
+                }, index * 50); // Effetto cascata
+            });
+        }
+    }
+
+    /**
      * HIDE LOADING OVERLAY - TESTATO
      */
     hideLoadingOverlay() {
         if (this.elements.loadingOverlay) {
+            // Completa la progress bar al 100%
+            if (this.elements.loadingProgress) {
+                this.elements.loadingProgress.style.width = '100%';
+            }
+
             setTimeout(() => {
                 this.elements.loadingOverlay.style.opacity = '0';
                 setTimeout(() => {
