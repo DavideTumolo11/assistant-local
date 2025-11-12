@@ -1,13 +1,20 @@
+' ========================================================
+' JARVIS AI ASSISTANT - STEALTH LAUNCHER
+' Avvia JARVIS senza finestre visibili (modalità invisibile)
+' ========================================================
+
 Set WshShell = CreateObject("WScript.Shell")
+Set fso = CreateObject("Scripting.FileSystemObject")
 
-' Percorso base del progetto
-projectPath = "C:\Users\Davide\assistant-local"
+' Ottieni il percorso della directory dove si trova questo script
+scriptPath = fso.GetParentFolderName(WScript.ScriptFullName)
 
-' Attiva il virtual environment e avvia il server Flask in background
-WshShell.Run "cmd /c cd /d " & projectPath & " && call .venv\Scripts\activate && python server\api_server.py", 0, False
+' Metodo 1: Esegui il .bat in modalità nascosta
+' Il parametro 0 = finestra nascosta, False = non aspettare il completamento
+WshShell.Run """" & scriptPath & "\start_jarvis.bat""", 0, False
 
-' Attendi qualche secondo per permettere al server di partire
-WScript.Sleep 3000
-
-' Avvia l'interfaccia Electron
-WshShell.Run "cmd /c cd /d " & projectPath & " && npm start", 0, False
+' Nota: Per chiudere JARVIS in modalità stealth:
+' - Apri Task Manager (Ctrl+Shift+Esc)
+' - Cerca "python.exe" e "Electron" e chiudi i processi
+' OPPURE
+' - Crea un file "stop_jarvis.bat" con i comandi di kill

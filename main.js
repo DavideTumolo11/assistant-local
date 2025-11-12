@@ -15,8 +15,6 @@ function createWindow() {
         }
     });
 
-    const path = require("path");
-
     mainWindow.loadFile('ui/index.html');
 
     mainWindow.on('closed', () => { mainWindow = null; });
