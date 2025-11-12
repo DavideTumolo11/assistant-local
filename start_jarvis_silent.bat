@@ -12,8 +12,8 @@ start /B .venv\Scripts\pythonw.exe server\websocket_server.py
 REM Attendi 4 secondi
 timeout /t 4 /nobreak >nul
 
-REM Avvia Electron
-start "" npm start
+REM Avvia Electron in background (senza finestra)
+start /B npm start
 
 REM Chiudi questa finestra CMD
 exit
