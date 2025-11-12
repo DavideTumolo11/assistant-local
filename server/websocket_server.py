@@ -70,8 +70,26 @@ class JarvisWebSocketServer:
         """Testa la connessione a Ollama"""
         try:
             # Prova a listare i modelli disponibili
-            models = ollama.list()
-            model_names = [m['name'] for m in models.get('models', [])]
+            models_response = ollama.list()
+
+            # Gestisci diverse strutture di risposta
+            if isinstance(models_response, dict) and 'models' in models_response:
+                models_list = models_response['models']
+            elif isinstance(models_response, list):
+                models_list = models_response
+            else:
+                models_list = []
+
+            # Estrai i nomi dei modelli
+            model_names = []
+            for m in models_list:
+                if isinstance(m, dict):
+                    if 'name' in m:
+                        model_names.append(m['name'])
+                    elif 'model' in m:
+                        model_names.append(m['model'])
+                elif isinstance(m, str):
+                    model_names.append(m)
 
             if self.ollama_model in model_names:
                 print(f"   ✅ Model '{self.ollama_model}' found and ready")
