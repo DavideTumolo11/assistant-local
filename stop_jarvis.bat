@@ -9,7 +9,7 @@ echo ============================================
 echo.
 
 echo Chiudo server Python...
-taskkill /FI "WINDOWTITLE eq JARVIS Backend*" /F >nul 2>&1
+taskkill /IM pythonw.exe /F >nul 2>&1
 taskkill /IM python.exe /F >nul 2>&1
 echo OK!
 

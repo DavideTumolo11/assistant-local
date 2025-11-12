@@ -87,12 +87,12 @@ echo ============================================
 echo.
 
 echo [BACKEND] Avvio server WebSocket (porta 8765)...
-start "JARVIS Backend" cmd /k "cd /d %CD% && call .venv\Scripts\activate.bat && python server\websocket_server.py"
-echo Avviato!
+start /B .venv\Scripts\pythonw.exe server\websocket_server.py
+echo Avviato in background (nessuna finestra)!
 echo.
 
-echo Attendo 3 secondi per il backend...
-timeout /t 3 /nobreak >nul
+echo Attendo 4 secondi per il backend...
+timeout /t 4 /nobreak >nul
 echo.
 
 echo [FRONTEND] Avvio interfaccia Electron...
@@ -101,7 +101,8 @@ npm start
 REM Quando chiudi Electron, chiudi anche il backend
 echo.
 echo Chiusura componenti...
-taskkill /FI "WINDOWTITLE eq JARVIS Backend*" /F >nul 2>&1
+taskkill /IM pythonw.exe /F >nul 2>&1
+taskkill /IM python.exe /F >nul 2>&1
 
 echo.
 echo ============================================
