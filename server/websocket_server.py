@@ -290,7 +290,7 @@ class JarvisWebSocketServer:
         else:
             return f"{seconds}s"
 
-    async def handler(self, websocket, path):
+    async def handler(self, websocket):
         """Handler principale per connessioni WebSocket"""
         await self.register(websocket)
 
