@@ -1113,10 +1113,10 @@ class JarvisApp {
     }
 
     /**
-     * ✅ ANIMA PROGRESS BAR E LOADING SEGMENTS
+     * ✅ ANIMA PROGRESS BAR INIZIALE
      */
     animateLoadingProgress() {
-        // Anima la barra di progresso
+        // Anima solo la barra di progresso iniziale
         if (this.elements.loadingProgress) {
             let progress = 0;
             const progressInterval = setInterval(() => {
@@ -1128,20 +1128,6 @@ class JarvisApp {
                 this.elements.loadingProgress.style.width = `${progress}%`;
                 this.debugLog(`📊 Loading progress: ${progress.toFixed(0)}%`);
             }, 200);
-        }
-
-        // Anima i segmenti sugli anelli
-        const segments = document.querySelectorAll('.loading-segment, .loading-segment-outer');
-        if (segments.length > 0) {
-            segments.forEach((segment, index) => {
-                setTimeout(() => {
-                    segment.classList.add('loading');
-                    setTimeout(() => {
-                        segment.classList.remove('loading');
-                        segment.classList.add('completed');
-                    }, 500);
-                }, index * 50); // Effetto cascata
-            });
         }
     }
 
