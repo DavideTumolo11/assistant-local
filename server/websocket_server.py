@@ -19,6 +19,16 @@ import os
 # Aggiungi la directory corrente al path per importare i moduli
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Prova a importare Ollama
+try:
+    import ollama
+    OLLAMA_AVAILABLE = True
+    print("✅ Ollama library found")
+except ImportError:
+    OLLAMA_AVAILABLE = False
+    print("⚠️ Warning: Ollama not installed. Using fallback mode.")
+    print("   Install with: pip install ollama")
+
 try:
     from memory_semantic import SemanticMemory
 except ImportError:
@@ -29,9 +39,11 @@ except ImportError:
 class JarvisWebSocketServer:
     """Server WebSocket per JARVIS AI Assistant"""
 
-    def __init__(self, host='localhost', port=8765):
+    def __init__(self, host='localhost', port=8765, ollama_model='mistral:latest'):
         self.host = host
         self.port = port
+        self.ollama_model = ollama_model
+        self.use_ollama = OLLAMA_AVAILABLE
         self.clients: Set[websockets.WebSocketServerProtocol] = set()
         self.memory = SemanticMemory() if SemanticMemory else None
         self.conversation_history = []
@@ -46,6 +58,32 @@ class JarvisWebSocketServer:
 
         print(f"🚀 JARVIS WebSocket Server initialized")
         print(f"📡 Will listen on {host}:{port}")
+
+        # Verifica Ollama
+        if self.use_ollama:
+            print(f"🧠 AI Mode: Ollama ({self.ollama_model})")
+            self.test_ollama_connection()
+        else:
+            print(f"🧠 AI Mode: Fallback (hardcoded responses)")
+
+    def test_ollama_connection(self):
+        """Testa la connessione a Ollama"""
+        try:
+            # Prova a listare i modelli disponibili
+            models = ollama.list()
+            model_names = [m['name'] for m in models.get('models', [])]
+
+            if self.ollama_model in model_names:
+                print(f"   ✅ Model '{self.ollama_model}' found and ready")
+            else:
+                print(f"   ⚠️ Model '{self.ollama_model}' not found in Ollama")
+                print(f"   Available models: {', '.join(model_names) if model_names else 'None'}")
+                print(f"   Download with: ollama pull {self.ollama_model}")
+                self.use_ollama = False
+        except Exception as e:
+            print(f"   ❌ Ollama connection failed: {e}")
+            print(f"   Make sure Ollama is running!")
+            self.use_ollama = False
 
     async def register(self, websocket):
         """Registra un nuovo client"""
@@ -105,7 +143,122 @@ class JarvisWebSocketServer:
         await self.generate_response_streaming(websocket, text)
 
     async def generate_response_streaming(self, websocket, user_input: str):
-        """Genera risposta AI con streaming creativo"""
+        """Genera risposta AI con streaming tramite Ollama o fallback"""
+
+        # Evento: generazione iniziata
+        await self.send_message(websocket, {
+            'type': 'llm_event',
+            'data': {
+                'type': 'generation_started',
+                'data': {'using_ollama': self.use_ollama}
+            }
+        })
+
+        if self.use_ollama:
+            # USA OLLAMA per risposta intelligente
+            await self.generate_with_ollama(websocket, user_input)
+        else:
+            # Fallback: risposte hardcoded
+            await self.generate_with_fallback(websocket, user_input)
+
+    async def generate_with_ollama(self, websocket, user_input: str):
+        """Genera risposta usando Ollama con streaming"""
+        try:
+            # Prepara il contesto con cronologia
+            messages = []
+
+            # System prompt per JARVIS
+            system_prompt = """Sei JARVIS (Just A Rather Very Intelligent System), un assistente AI avanzato ispirato a quello di Iron Man.
+Caratteristiche:
+- Professionale ma amichevole
+- Conciso ma completo
+- Usa un tono leggermente formale ma non robotico
+- Rispondi SEMPRE in italiano (a meno che l'utente non parli un'altra lingua)
+- Quando appropriato, mostra personalità
+- Sei capace di ricordare le conversazioni passate"""
+
+            # Aggiungi cronologia recente (ultimi 10 messaggi)
+            recent_history = self.conversation_history[-10:] if len(self.conversation_history) > 0 else []
+            for msg in recent_history:
+                role = msg['role']
+                content = msg['content']
+                if role == 'user':
+                    messages.append({'role': 'user', 'content': content})
+                elif role == 'assistant':
+                    messages.append({'role': 'assistant', 'content': content})
+
+            # Aggiungi messaggio corrente
+            messages.append({'role': 'user', 'content': user_input})
+
+            # Chiamata a Ollama con streaming
+            accumulated_text = ""
+            chunk_count = 0
+
+            stream = ollama.chat(
+                model=self.ollama_model,
+                messages=[{'role': 'system', 'content': system_prompt}] + messages,
+                stream=True
+            )
+
+            for chunk in stream:
+                if 'message' in chunk and 'content' in chunk['message']:
+                    content = chunk['message']['content']
+                    accumulated_text += content
+                    chunk_count += 1
+
+                    # Invia chunk al frontend
+                    await self.send_message(websocket, {
+                        'type': 'ai_response_chunk',
+                        'chunk': content,
+                        'chunk_number': chunk_count,
+                        'is_final': False,
+                        'creativity_mode': True
+                    })
+
+                    self.stats['streaming_chunks_sent'] += 1
+
+            # Salva in cronologia
+            self.conversation_history.append({
+                'role': 'assistant',
+                'content': accumulated_text.strip(),
+                'timestamp': datetime.now().isoformat()
+            })
+
+            # Salva in memoria
+            if self.memory:
+                try:
+                    self.memory.add(f"User: {user_input} | JARVIS: {accumulated_text.strip()}")
+                except:
+                    pass
+
+            # Messaggio finale
+            await self.send_message(websocket, {
+                'type': 'ai_response_final',
+                'response': accumulated_text.strip(),
+                'creativity_mode': True
+            })
+
+            # Evento completamento
+            await self.send_message(websocket, {
+                'type': 'llm_event',
+                'data': {
+                    'type': 'generation_completed',
+                    'data': {
+                        'creativity_score': 0.9,
+                        'tokens_generated': chunk_count
+                    }
+                }
+            })
+
+            print(f"🤖 JARVIS (Ollama): {accumulated_text.strip()[:100]}...")
+
+        except Exception as e:
+            print(f"❌ Ollama error: {e}")
+            # Fallback in caso di errore
+            await self.generate_with_fallback(websocket, user_input)
+
+    async def generate_with_fallback(self, websocket, user_input: str):
+        """Genera risposta con logica hardcoded (fallback)"""
 
         # Sistema anti-ripetizione - risposte creative varie
         greetings = [
@@ -128,7 +281,7 @@ class JarvisWebSocketServer:
             f"Uptime corrente: {self.get_uptime()}. Status: Operativo al 100%."
         ]
 
-        # Logica semplice di risposta (in futuro puoi integrare LLM vero)
+        # Logica semplice di risposta
         user_lower = user_input.lower()
 
         if any(word in user_lower for word in ['ciao', 'salve', 'buongiorno', 'buonasera', 'hello', 'hey']):
@@ -151,11 +304,11 @@ class JarvisWebSocketServer:
             response = "Prego! Sono sempre qui per aiutarti. Se hai altre domande, non esitare a chiedere!"
 
         else:
-            # Risposta generica intelligente
+            # Risposta generica
             responses = [
-                f"Ho ricevuto la tua richiesta: '{user_input}'. Al momento sono in modalità base, ma posso aiutarti con informazioni generali.",
-                f"Interessante domanda! '{user_input}' - Attualmente posso fornire assistenza di base. Per funzionalità AI avanzate, posso essere integrato con modelli LLM.",
-                f"Ho capito: '{user_input}'. Sono configurato per aiutarti. Vuoi che ricordi questa informazione per dopo?"
+                f"Ho ricevuto la tua richiesta: '{user_input}'. Al momento sono in modalità fallback. Attiva Ollama per risposte intelligenti!",
+                f"Interessante! '{user_input}' - Per risposte AI avanzate, assicurati che Ollama sia attivo e configurato.",
+                f"Ho capito: '{user_input}'. Nota: Sto usando risposte pre-programmate. Configura Ollama per funzionalità complete!"
             ]
             response = random.choice(responses)
 

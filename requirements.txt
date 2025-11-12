@@ -1,4 +1,5 @@
 websockets
+ollama
 fastapi
 uvicorn
 requests
