@@ -113,7 +113,7 @@ class JarvisApp {
             this.hideLoadingOverlay();
 
             this.debugLog('✅ Jarvis Frontend initialized successfully');
-            this.showNotification('J.A.R.V.I.S Interface Online - CREATIVE Streaming Ready', 'success');
+            this.showNotification('J.A.R.V.I.S online', 'success');
 
         } catch (error) {
             this.debugLog('❌ Error initializing Jarvis Frontend:', error);
@@ -291,7 +291,7 @@ class JarvisApp {
                 }
 
                 // Aggiungi messaggio utente
-                this.addChatMessage('USER', message);
+                this.addChatMessage('TU', message);
 
                 // Invia al backend
                 this.sendWebSocketMessageWithRetry('text_command', { text: message });
@@ -334,7 +334,7 @@ class JarvisApp {
                 this.debugLog('✅ WebSocket connected successfully');
                 this.state.connected = true;
                 this.updateConnectionStatus(true);
-                this.showNotification('Connected to Jarvis Core - CREATIVE Streaming Active', 'success');
+                this.showNotification('Connesso a JARVIS', 'success');
             };
 
             this.websocket.onmessage = (event) => {
@@ -439,17 +439,9 @@ class JarvisApp {
                     this.debugLog('🔗 Connection established:', message.message);
                     this.addChatMessage('SYSTEM', `Connected: ${message.message}`);
 
-                    // ✅ NUOVO - Log features creative
+                    // Log features (senza notifiche)
                     if (message.features) {
                         this.debugLog('✨ Server features:', message.features);
-
-                        if (message.features.creative_mode) {
-                            this.showNotification('🎨 Modalità creativa ATTIVA - Risposte più varie!', 'info', 5000);
-                        }
-
-                        if (message.features.stable_streaming) {
-                            this.showNotification('📡 Streaming STABILE attivo - Zero disconnessioni!', 'success', 4000);
-                        }
                     }
                     break;
 
@@ -504,19 +496,16 @@ class JarvisApp {
 
         switch (eventType) {
             case 'generation_started':
-                this.showNotification('🎨 Generazione creativa avviata...', 'info', 2000);
+                this.debugLog('🎨 Generation started');
                 break;
 
             case 'generation_completed':
                 const creativity = eventData.data.creativity_score || 0;
                 this.debugLog('🎯 Creativity score:', creativity.toFixed(2));
-                if (creativity > 0.8) {
-                    this.showNotification(`✨ Risposta molto creativa! (${creativity.toFixed(2)})`, 'success', 3000);
-                }
                 break;
 
             case 'generation_error':
-                this.showNotification('❌ Errore nella generazione AI', 'error');
+                this.showNotification('Errore nella risposta', 'error');
                 if (this.streamingState.isStreaming) {
                     this.forceResetStreaming();
                 }
@@ -524,10 +513,7 @@ class JarvisApp {
 
             case 'llm_initialized':
                 const features = eventData.data;
-                this.debugLog('🧠 LLM Creative Features:', features);
-                if (features.creativity_mode === 'HIGH') {
-                    this.showNotification('🎨 Modalità creatività ALTA attivata', 'info', 4000);
-                }
+                this.debugLog('🧠 LLM Features:', features);
                 break;
         }
     }
@@ -607,23 +593,22 @@ class JarvisApp {
             this.streamingState.accumulatedText = '';  // ✅ RESET accumulator
             this.streamingState.chunkCount = 0;        // ✅ RESET chunk counter
 
-            // Crea elemento messaggio con indicatori creativi
+            // Crea elemento messaggio semplice (senza badge tecnici)
             const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message jarvis-message streaming ${creativityMode ? 'creative-mode' : ''}`;
+            messageDiv.className = `chat-message jarvis-message streaming`;
 
             const timestamp = new Date().toLocaleTimeString('it-IT', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
 
-            // ✅ HEADER AGGIORNATO per creatività
-            const creativeBadge = creativityMode ? ' 🎨 CREATIVO' : '';
-            const headerColor = creativityMode ? '#FF6B35' : '#00ff7f';
-            const bgColor = creativityMode ? 'rgba(255, 107, 53, 0.1)' : 'rgba(0, 255, 127, 0.1)';
+            // Header semplice - solo JARVIS
+            const headerColor = '#00ff7f';
+            const bgColor = 'rgba(0, 255, 127, 0.1)';
 
             messageDiv.innerHTML = `
-                <div class="message-header" style="font-weight: bold; font-size: 11px; margin-bottom: 5px; color: ${headerColor}; text-transform: uppercase;">
-                    JARVIS${creativeBadge} - ${timestamp} - STREAMING...
+                <div class="message-header" style="font-weight: bold; font-size: 11px; margin-bottom: 5px; color: ${headerColor};">
+                    JARVIS - ${timestamp}
                 </div>
                 <div class="streaming-content" style="line-height: 1.5; color: #ffffff; word-wrap: break-word; min-height: 20px;">
                     <span class="typing-cursor">|</span>
@@ -631,13 +616,12 @@ class JarvisApp {
             `;
 
             messageDiv.style.cssText = `
-                margin-bottom: 15px; 
-                padding: 12px 15px; 
-                border-radius: 12px; 
-                background: ${bgColor}; 
+                margin-bottom: 15px;
+                padding: 12px 15px;
+                border-radius: 12px;
+                background: ${bgColor};
                 border-left: 3px solid ${headerColor};
                 animation: fadeInUp 0.3s ease-out;
-                ${creativityMode ? 'box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);' : ''}
             `;
 
             this.elements.chatMessages.appendChild(messageDiv);
@@ -703,7 +687,7 @@ class JarvisApp {
      */
     completeStreamingMessageRobust(creativityMode = false) {
         try {
-            this.debugLog('🏁 Completing CREATIVE streaming message...');
+            this.debugLog('🏁 Completing streaming message...');
 
             if (this.streamingState.currentMessageElement) {
                 // Rimuovi typing cursor
@@ -713,15 +697,8 @@ class JarvisApp {
                     contentDiv.textContent = currentText;
                 }
 
-                // ✅ AGGIORNA HEADER CON STATISTICHE CREATIVE
-                const headerDiv = this.streamingState.currentMessageElement.querySelector('.message-header');
-                if (headerDiv) {
-                    const streamDuration = ((Date.now() - this.streamingState.streamStartTime) / 1000).toFixed(1);
-                    const creativeBadge = creativityMode ? ' 🎨' : '';
-                    const stats = `COMPLETED${creativeBadge} (${streamDuration}s, ${this.streamingState.chunkCount} chunks, ${this.streamingState.totalCharsReceived} chars)`;
-
-                    headerDiv.innerHTML = headerDiv.innerHTML.replace('STREAMING...', stats);
-                }
+                // Header resta invariato (nessuna statistica)
+                // Già mostra solo "JARVIS - HH:MM"
 
                 // Rimuovi classe streaming
                 this.streamingState.currentMessageElement.classList.remove('streaming');
@@ -729,13 +706,6 @@ class JarvisApp {
 
             // Reset stato completo
             this.resetStreamingState();
-
-            // ✅ NOTIFICA COMPLETAMENTO CREATIVE
-            const completionMessage = creativityMode
-                ? `✨ Risposta creativa completata (${this.streamingState.chunkCount} chunks)`
-                : `✅ Risposta completata`;
-
-            this.showNotification(completionMessage, 'success', 3000);
 
             this.debugLog('✅ CREATIVE streaming message completed');
 
