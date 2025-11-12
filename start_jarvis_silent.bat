@@ -14,3 +14,6 @@ timeout /t 4 /nobreak >nul
 
 REM Avvia Electron
 start "" npm start
+
+REM Chiudi questa finestra CMD
+exit
