@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite3
+venv/
+.env
+.venv/
+.Python
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Node / Electron
+node_modules/
+dist/
+out/
+npm-debug.log
+yarn-error.log
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Chroma / DB local
+semantic_db/
+*.db
+*.sqlite
+
+# Secrets
+*.pem
+*.key

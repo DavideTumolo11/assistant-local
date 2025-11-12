@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+requests
+langchain
+llama-index
+chromadb
+faiss-cpu
+python-dotenv
+sounddevice
+vosk
+pyttsx3
+numpy

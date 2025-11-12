@@ -1,0 +1,18 @@
+[
+    {
+        "role": "user",
+        "content": "Tu: Mi chiamo Davide"
+    },
+    {
+        "role": "assistant",
+        "content": "io sono un assistente ed è molto piacere incontrarti, Davide! Per favore, non dimenticare di chiedermi qualunque cosa che mi possa aiutare."
+    },
+    {
+        "role": "user",
+        "content": "Tu: Ti ricordi come mi chiamo?"
+    },
+    {
+        "role": "assistant",
+        "content": "Sì, ricordo che il tuo nome è Davide. Come posso aiutarti oggi?"
+    }
+]
