@@ -307,7 +307,10 @@
         <div class="side-panels">
             <!-- PANNELLO SINISTRO - STATO SISTEMA -->
             <div class="panel panel-left">
-                <div class="panel-header">SYSTEM STATUS</div>
+                <div class="panel-header">
+                    SYSTEM STATUS
+                    <div class="connection-indicator" id="ws-status"></div>
+                </div>
                 <div class="panel-content">
                     <div class="metric">
                         <span class="metric-label">CPU</span>
@@ -371,12 +374,6 @@
         <!-- NOTIFICHE SISTEMA -->
         <div class="notifications-container" id="notifications">
             <!-- Le notifiche verranno aggiunte dinamicamente -->
-        </div>
-
-        <!-- STATO CONNESSIONE WEBSOCKET -->
-        <div class="connection-status">
-            <div class="connection-indicator" id="ws-status"></div>
-            <div class="connection-text">Backend: <span id="backend-status">Connecting...</span></div>
         </div>
     </div>
 

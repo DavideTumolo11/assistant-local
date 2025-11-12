@@ -134,7 +134,6 @@ class JarvisApp {
             memoryUsage: document.getElementById('memory-usage'),
             voiceStatus: document.getElementById('voice-status'),
             aiModel: document.getElementById('ai-model'),
-            backendStatus: document.getElementById('backend-status'),
             wsStatus: document.getElementById('ws-status'),
 
             // Control buttons
@@ -960,16 +959,6 @@ class JarvisApp {
             } else {
                 this.elements.wsStatus.classList.remove('connected');
             }
-        }
-
-        if (this.elements.backendStatus) {
-            // ✅ AGGIORNATO per creatività
-            const statusText = connected
-                ? 'Connected - CREATIVE Streaming'
-                : 'Disconnected';
-
-            this.elements.backendStatus.textContent = statusText;
-            this.elements.backendStatus.style.color = connected ? '#00ff7f' : '#ff4757';
         }
     }
 
