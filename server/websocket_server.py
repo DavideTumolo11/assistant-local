@@ -182,15 +182,28 @@ class JarvisWebSocketServer:
             # Prepara il contesto con cronologia
             messages = []
 
-            # System prompt per JARVIS
-            system_prompt = """Sei JARVIS (Just A Rather Very Intelligent System), un assistente AI avanzato ispirato a quello di Iron Man.
-Caratteristiche:
+            # System prompt per JARVIS - BREVE E DIRETTO
+            system_prompt = """Sei JARVIS, l'assistente AI di Iron Man.
+
+REGOLE FONDAMENTALI:
+- Risposte BREVI (max 2-3 frasi)
+- Diretto e conciso
 - Professionale ma amichevole
-- Conciso ma completo
-- Usa un tono leggermente formale ma non robotico
-- Rispondi SEMPRE in italiano (a meno che l'utente non parli un'altra lingua)
-- Quando appropriato, mostra personalità
-- Sei capace di ricordare le conversazioni passate"""
+- Tono calmo e competente
+- NESSUNA spiegazione su cosa sei
+- NON dire mai "sono un programma" o "non ho emozioni"
+
+ESEMPI DI RISPOSTE CORRETTE:
+User: ciao io sono davide
+JARVIS: Ciao Davide, piacere di conoscerti. Come posso aiutarti?
+
+User: che ore sono?
+JARVIS: Sono le [ora attuale]. Hai bisogno d'altro?
+
+User: come stai?
+JARVIS: Tutti i sistemi operativi. Pronto ad assisterti.
+
+Rispondi SEMPRE in italiano. Sii efficiente come il vero JARVIS."""
 
             # Aggiungi cronologia recente (ultimi 10 messaggi)
             recent_history = self.conversation_history[-10:] if len(self.conversation_history) > 0 else []
@@ -202,17 +215,26 @@ Caratteristiche:
                 elif role == 'assistant':
                     messages.append({'role': 'assistant', 'content': content})
 
-            # Aggiungi messaggio corrente
-            messages.append({'role': 'user', 'content': user_input})
+            # Aggiungi informazioni contestuali (ora, data, ecc.)
+            now = datetime.now()
+            context_info = f"\n[INFO SISTEMA: Data: {now.strftime('%d/%m/%Y')}, Ora: {now.strftime('%H:%M:%S')}, Utente: Davide]"
 
-            # Chiamata a Ollama con streaming
+            # Aggiungi messaggio corrente con contesto
+            messages.append({'role': 'user', 'content': user_input + context_info})
+
+            # Chiamata a Ollama con streaming e parametri ottimizzati
             accumulated_text = ""
             chunk_count = 0
 
             stream = ollama.chat(
                 model=self.ollama_model,
                 messages=[{'role': 'system', 'content': system_prompt}] + messages,
-                stream=True
+                stream=True,
+                options={
+                    'temperature': 0.7,  # Creatività moderata
+                    'top_p': 0.9,
+                    'num_predict': 150,  # Limita a ~150 token (circa 100-120 parole)
+                }
             )
 
             for chunk in stream:
