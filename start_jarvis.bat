@@ -96,16 +96,14 @@ timeout /t 4 /nobreak >nul
 echo.
 
 echo [FRONTEND] Avvio interfaccia Electron...
-npm start
-
-REM Quando chiudi Electron, chiudi anche il backend
-echo.
-echo Chiusura componenti...
-taskkill /IM pythonw.exe /F >nul 2>&1
-taskkill /IM python.exe /F >nul 2>&1
-
 echo.
 echo ============================================
-echo         JARVIS CHIUSO CORRETTAMENTE
+echo    JARVIS AVVIATO! Questa finestra si chiudera'
+echo    Per chiudere JARVIS: stop_jarvis.bat
 echo ============================================
-pause
+timeout /t 2 /nobreak >nul
+
+start "" npm start
+
+REM Chiudi questa finestra CMD
+exit
