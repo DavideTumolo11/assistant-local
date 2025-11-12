@@ -69,38 +69,35 @@ class JarvisWebSocketServer:
     def test_ollama_connection(self):
         """Testa la connessione a Ollama"""
         try:
-            # Prova a listare i modelli disponibili
-            models_response = ollama.list()
+            # Test semplice: prova a fare una chiamata chat veloce
+            # Questo è più affidabile di ollama.list()
+            test_response = ollama.chat(
+                model=self.ollama_model,
+                messages=[{'role': 'user', 'content': 'test'}],
+                stream=False
+            )
 
-            # Gestisci diverse strutture di risposta
-            if isinstance(models_response, dict) and 'models' in models_response:
-                models_list = models_response['models']
-            elif isinstance(models_response, list):
-                models_list = models_response
-            else:
-                models_list = []
+            # Se arriviamo qui, il modello esiste e funziona
+            print(f"   ✅ Model '{self.ollama_model}' found and ready")
+            self.use_ollama = True
 
-            # Estrai i nomi dei modelli
-            model_names = []
-            for m in models_list:
-                if isinstance(m, dict):
-                    if 'name' in m:
-                        model_names.append(m['name'])
-                    elif 'model' in m:
-                        model_names.append(m['model'])
-                elif isinstance(m, str):
-                    model_names.append(m)
-
-            if self.ollama_model in model_names:
-                print(f"   ✅ Model '{self.ollama_model}' found and ready")
-            else:
-                print(f"   ⚠️ Model '{self.ollama_model}' not found in Ollama")
-                print(f"   Available models: {', '.join(model_names) if model_names else 'None'}")
-                print(f"   Download with: ollama pull {self.ollama_model}")
-                self.use_ollama = False
         except Exception as e:
-            print(f"   ❌ Ollama connection failed: {e}")
-            print(f"   Make sure Ollama is running!")
+            error_str = str(e).lower()
+
+            # Analizza il tipo di errore
+            if 'not found' in error_str or 'model' in error_str:
+                print(f"   ⚠️ Model '{self.ollama_model}' not found in Ollama")
+                print(f"   Download with: ollama pull {self.ollama_model}")
+            elif 'connection' in error_str or 'refused' in error_str:
+                print(f"   ❌ Ollama connection failed: {e}")
+                print(f"   Make sure Ollama is running!")
+            else:
+                print(f"   ⚠️ Ollama test failed: {e}")
+                print(f"   Trying anyway... (might still work)")
+                # Non disabilitiamo, potrebbe comunque funzionare
+                self.use_ollama = True
+                return
+
             self.use_ollama = False
 
     async def register(self, websocket):
