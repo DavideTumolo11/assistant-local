@@ -244,10 +244,51 @@ class JarvisApp {
         // Chat functionality
         this.setupChatEventListeners();
 
+        // Setup controls modal
+        this.setupControlsModal();
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
 
         this.debugLog('🎛️ Event listeners setup complete');
+    }
+
+    /**
+     * SETUP CONTROLS MODAL
+     */
+    setupControlsModal() {
+        const settingsIcon = document.getElementById('settings-icon');
+        const controlsModal = document.getElementById('controls-modal');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const controlsClose = document.getElementById('controls-close');
+
+        if (!settingsIcon || !controlsModal || !modalOverlay) {
+            this.debugLog('⚠️ Modal elements not found');
+            return;
+        }
+
+        // Apri modal
+        settingsIcon.addEventListener('click', () => {
+            controlsModal.style.display = 'block';
+            modalOverlay.style.display = 'block';
+            this.debugLog('⚙️ Controls modal opened');
+        });
+
+        // Chiudi modal (pulsante X)
+        controlsClose?.addEventListener('click', () => {
+            controlsModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+            this.debugLog('❌ Controls modal closed');
+        });
+
+        // Chiudi modal (click su overlay)
+        modalOverlay.addEventListener('click', () => {
+            controlsModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+            this.debugLog('❌ Controls modal closed (overlay)');
+        });
+
+        this.debugLog('✅ Controls modal setup complete');
     }
 
     /**
