@@ -536,10 +536,11 @@ body {
 
 .voice-wave {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
     gap: 3px;
     margin-bottom: 10px;
+    height: 40px; /* Altezza fissa per evitare movimento */
 }
 
 .wave-bar {
@@ -549,6 +550,7 @@ body {
     border-radius: 2px;
     animation: wave-animation 1.5s ease-in-out infinite;
     animation-delay: var(--delay);
+    transform-origin: bottom; /* Scala dal basso */
 }
 
 .voice-text {
@@ -857,12 +859,12 @@ body.state-speaking .ring {
 
     0%,
     100% {
-        height: 20px;
+        transform: scaleY(1);
         opacity: 0.6;
     }
 
     50% {
-        height: 40px;
+        transform: scaleY(2);
         opacity: 1;
     }
 }
