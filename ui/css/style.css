@@ -528,12 +528,10 @@ body {
 ================================ */
 
 .voice-activity {
-    position: absolute;
-    bottom: 150px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: relative;
     text-align: center;
     z-index: 15;
+    margin-top: 15px;
 }
 
 .voice-wave {
