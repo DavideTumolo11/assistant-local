@@ -471,7 +471,7 @@ class JarvisApp {
 
                 case 'system_status':
                     this.debugLog('📊 System status update:', message.status);
-                    this.updateSystemMetrics(message);
+                    this.updateSystemMetrics(message.status);
                     break;
 
                 case 'llm_status':
