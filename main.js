@@ -1,5 +1,5 @@
 // main.js
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -10,8 +10,8 @@ function createWindow() {
         height: 800,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
-            contextIsolation: true,
-            nodeIntegration: false
+            contextIsolation: false,
+            nodeIntegration: true
         }
     });
 
@@ -19,6 +19,19 @@ function createWindow() {
 
     mainWindow.on('closed', () => { mainWindow = null; });
 }
+
+// IPC Handlers per controlli finestra
+ipcMain.handle('minimize-window', () => {
+    if (mainWindow) {
+        mainWindow.minimize();
+    }
+});
+
+ipcMain.handle('toggle-fullscreen', () => {
+    if (mainWindow) {
+        mainWindow.setFullScreen(!mainWindow.isFullScreen());
+    }
+});
 
 app.whenReady().then(createWindow);
 
