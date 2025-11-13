@@ -1,15 +1,19 @@
 {
   "name": "assistant-local",
   "version": "1.0.0",
-  "description": "",
+  "description": "JARVIS - AI Assistant locale",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "backend": "python server/websocket_server.py",
+    "dev": "concurrently \"npm run backend\" \"npm start\"",
+    "setup": "python -m pip install -r requirements.txt"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["jarvis", "ai", "assistant"],
+  "author": "Davide",
   "license": "ISC",
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "electron": "^39.1.2"
   }
 }
