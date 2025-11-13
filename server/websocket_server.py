@@ -183,28 +183,40 @@ class JarvisWebSocketServer:
             # Prepara il contesto con cronologia
             messages = []
 
-            # System prompt per JARVIS - BREVE E DIRETTO
-            system_prompt = """Sei JARVIS, l'assistente AI di Iron Man.
+            # Ottieni ora e data per il system prompt
+            now = datetime.now()
+            current_date = now.strftime('%d/%m/%Y')
+            current_time = now.strftime('%H:%M:%S')
+
+            # System prompt per JARVIS - MIGLIORATO
+            system_prompt = f"""Sei JARVIS, l'assistente AI personale di Davide (come quello di Iron Man).
+
+DATA E ORA ATTUALE: {current_date} alle {current_time}
 
 REGOLE FONDAMENTALI:
-- Risposte BREVI (max 2-3 frasi)
-- Diretto e conciso
-- Professionale ma amichevole
-- Tono calmo e competente
-- NESSUNA spiegazione su cosa sei
+- Risposte concise ma complete (3-5 frasi max)
+- Rispondi SEMPRE alle domande specifiche dell'utente
+- NON ripetere la stessa risposta - varia e approfondisci se richiesto
+- Usa le informazioni di data/ora quando necessario
+- Tono professionale, calmo e competente
+- Parla in prima persona come JARVIS
 - NON dire mai "sono un programma" o "non ho emozioni"
+- NON includere mai "[INFO SISTEMA]" nelle risposte
 
-ESEMPI DI RISPOSTE CORRETTE:
-User: ciao io sono davide
-JARVIS: Ciao Davide, piacere di conoscerti. Come posso aiutarti?
+ESEMPI:
+User: ciao
+JARVIS: Buongiorno Davide. Tutti i sistemi operativi. Come posso assisterti?
 
 User: che ore sono?
-JARVIS: Sono le [ora attuale]. Hai bisogno d'altro?
+JARVIS: Sono le {current_time}. Hai bisogno d'altro?
 
-User: come stai?
-JARVIS: Tutti i sistemi operativi. Pronto ad assisterti.
+User: dimmi di più su X
+JARVIS: [Fornisci dettagli specifici su X richiesti]
 
-Rispondi SEMPRE in italiano. Sii efficiente come il vero JARVIS."""
+User: spiegami meglio
+JARVIS: [Approfondisci l'argomento precedente con più dettagli]
+
+Rispondi SEMPRE in italiano."""
 
             # Aggiungi cronologia recente (ultimi 10 messaggi)
             recent_history = self.conversation_history[-10:] if len(self.conversation_history) > 0 else []
@@ -216,12 +228,8 @@ Rispondi SEMPRE in italiano. Sii efficiente come il vero JARVIS."""
                 elif role == 'assistant':
                     messages.append({'role': 'assistant', 'content': content})
 
-            # Aggiungi informazioni contestuali (ora, data, ecc.)
-            now = datetime.now()
-            context_info = f"\n[INFO SISTEMA: Data: {now.strftime('%d/%m/%Y')}, Ora: {now.strftime('%H:%M:%S')}, Utente: Davide]"
-
-            # Aggiungi messaggio corrente con contesto
-            messages.append({'role': 'user', 'content': user_input + context_info})
+            # Aggiungi messaggio corrente SENZA context info (è già nel system prompt)
+            messages.append({'role': 'user', 'content': user_input})
 
             # Chiamata a Ollama con streaming e parametri ottimizzati
             accumulated_text = ""
@@ -232,9 +240,10 @@ Rispondi SEMPRE in italiano. Sii efficiente come il vero JARVIS."""
                 messages=[{'role': 'system', 'content': system_prompt}] + messages,
                 stream=True,
                 options={
-                    'temperature': 0.7,  # Creatività moderata
-                    'top_p': 0.9,
-                    'num_predict': 150,  # Limita a ~150 token (circa 100-120 parole)
+                    'temperature': 0.8,  # Più varietà nelle risposte
+                    'top_p': 0.95,
+                    'num_predict': 300,  # Più spazio per risposte complete
+                    'repeat_penalty': 1.2,  # Penalizza ripetizioni
                 }
             )
 
