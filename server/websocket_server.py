@@ -231,20 +231,14 @@ Rispondi SEMPRE in italiano."""
             # Aggiungi messaggio corrente SENZA context info (è già nel system prompt)
             messages.append({'role': 'user', 'content': user_input})
 
-            # Chiamata a Ollama con streaming e parametri ottimizzati
+            # Chiamata a Ollama - usa parametri default di Mistral (ottimizzati)
             accumulated_text = ""
             chunk_count = 0
 
             stream = ollama.chat(
                 model=self.ollama_model,
                 messages=[{'role': 'system', 'content': system_prompt}] + messages,
-                stream=True,
-                options={
-                    'temperature': 0.8,  # Più varietà nelle risposte
-                    'top_p': 0.95,
-                    'num_predict': 300,  # Più spazio per risposte complete
-                    'repeat_penalty': 1.2,  # Penalizza ripetizioni
-                }
+                stream=True
             )
 
             for chunk in stream:
