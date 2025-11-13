@@ -290,15 +290,13 @@ class JarvisApp {
             this.debugLog('❌ Controls modal closed (overlay)');
         });
 
-        // Setup Electron window controls
-        if (typeof require !== 'undefined') {
+        // Setup Electron window controls (SECURE via contextBridge)
+        if (window.electronAPI) {
             try {
-                const { ipcRenderer } = require('electron');
-
                 // Minimize window
                 if (minimizeBtn) {
                     minimizeBtn.addEventListener('click', () => {
-                        ipcRenderer.invoke('minimize-window');
+                        window.electronAPI.minimizeWindow();
                         this.debugLog('📦 Minimize window requested');
                     });
                 }
@@ -306,15 +304,17 @@ class JarvisApp {
                 // Toggle fullscreen
                 if (fullscreenBtn) {
                     fullscreenBtn.addEventListener('click', () => {
-                        ipcRenderer.invoke('toggle-fullscreen');
+                        window.electronAPI.toggleFullscreen();
                         this.debugLog('🔲 Fullscreen toggle requested');
                     });
                 }
 
-                this.debugLog('✅ Electron controls connected');
+                this.debugLog('✅ Electron controls connected (SECURE)');
             } catch (error) {
-                this.debugLog('⚠️ Electron not available:', error);
+                this.debugLog('⚠️ Electron API error:', error);
             }
+        } else {
+            this.debugLog('⚠️ Electron API not available');
         }
 
         this.debugLog('✅ Controls modal setup complete');
