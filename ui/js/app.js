@@ -963,29 +963,36 @@ class JarvisApp {
     }
 
     /**
-     * ✅ NUOVO - UPDATE SYSTEM METRICS
+     * ✅ UPDATE SYSTEM METRICS - Con dati reali
      */
     updateSystemMetrics(statusData) {
         try {
-            // Update performance display se elementi esistono
-            const metrics = {
-                'uptime': statusData.uptime_formatted || 'N/A',
-                'clients': statusData.connected_clients || 0,
-                'messages': statusData.statistics?.messages_processed || 0,
-                'chunks': statusData.statistics?.streaming_chunks_sent || 0
-            };
-
-            Object.keys(metrics).forEach(key => {
-                const element = document.getElementById(`metric-${key}`);
-                if (element) {
-                    element.textContent = metrics[key];
-                }
-            });
-
-            // Update creativity stats se disponibili
-            if (statusData.creativity_stats) {
-                this.debugLog('🎨 Creativity stats update:', statusData.creativity_stats);
+            // Update CPU usage
+            if (this.elements.cpuUsage && statusData.cpu_usage !== undefined) {
+                this.elements.cpuUsage.textContent = `${statusData.cpu_usage}%`;
             }
+
+            // Update Memory usage
+            if (this.elements.memoryUsage && statusData.memory_usage !== undefined) {
+                this.elements.memoryUsage.textContent = `${statusData.memory_usage}%`;
+            }
+
+            // Update Voice status
+            if (this.elements.voiceStatus && statusData.voice_status) {
+                this.elements.voiceStatus.textContent = statusData.voice_status;
+            }
+
+            // Update AI Model
+            if (this.elements.aiModel && statusData.ai_model) {
+                this.elements.aiModel.textContent = statusData.ai_model.toUpperCase();
+            }
+
+            this.debugLog('📊 System metrics updated:', {
+                cpu: statusData.cpu_usage,
+                memory: statusData.memory_usage,
+                voice: statusData.voice_status,
+                model: statusData.ai_model
+            });
 
         } catch (error) {
             this.debugLog('❌ Error updating system metrics:', error);

@@ -15,6 +15,7 @@ from datetime import datetime
 from typing import Set, Dict, Any
 import sys
 import os
+import psutil  # Per metriche di sistema reali
 
 # Aggiungi la directory corrente al path per importare i moduli
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -453,8 +454,13 @@ Rispondi SEMPRE in italiano. Sii efficiente come il vero JARVIS."""
             })
 
     async def send_system_status(self, websocket):
-        """Invia stato del sistema"""
+        """Invia stato del sistema con metriche reali"""
         uptime = (datetime.now() - self.start_time).total_seconds()
+
+        # Metriche di sistema reali usando psutil
+        cpu_percent = psutil.cpu_percent(interval=0.1)
+        memory = psutil.virtual_memory()
+        memory_percent = memory.percent
 
         await self.send_message(websocket, {
             'type': 'system_status',
@@ -463,7 +469,12 @@ Rispondi SEMPRE in italiano. Sii efficiente come il vero JARVIS."""
                 'uptime_formatted': self.get_uptime(),
                 'connected_clients': len(self.clients),
                 'statistics': self.stats,
-                'memory_enabled': self.memory is not None
+                'memory_enabled': self.memory is not None,
+                # Metriche reali
+                'cpu_usage': round(cpu_percent, 1),
+                'memory_usage': round(memory_percent, 1),
+                'voice_status': 'OFFLINE',  # Da implementare
+                'ai_model': self.ollama_model if self.use_ollama else 'FALLBACK'
             }
         })
 
@@ -498,9 +509,9 @@ Rispondi SEMPRE in italiano. Sii efficiente come il vero JARVIS."""
             await self.unregister(websocket)
 
     async def periodic_status_broadcast(self):
-        """Invia aggiornamenti di stato periodici"""
+        """Invia aggiornamenti di stato periodici con metriche reali"""
         while True:
-            await asyncio.sleep(30)  # Ogni 30 secondi
+            await asyncio.sleep(5)  # Ogni 5 secondi per metriche live
 
             if self.clients:
                 for client in self.clients:
