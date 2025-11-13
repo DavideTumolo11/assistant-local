@@ -148,11 +148,8 @@ class JarvisApp {
             chatSend: document.getElementById('chat-send'),
             chatMessages: document.getElementById('chat-messages'),
 
-            // Progress squares
-            cpuProgress: document.getElementById('cpu-progress'),
-            memoryProgress: document.getElementById('memory-progress'),
-            networkProgress: document.getElementById('network-progress'),
-            aiProgress: document.getElementById('ai-progress'),
+            // Voice activity
+            voiceActivity: document.querySelector('.voice-activity'),
 
             // Loading
             loadingOverlay: document.getElementById('loading-overlay'),
