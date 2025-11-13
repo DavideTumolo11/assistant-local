@@ -228,6 +228,8 @@ body {
 
 .jarvis-core {
     position: absolute;
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
     z-index: 20;
     display: flex;
@@ -531,7 +533,7 @@ body {
     position: relative;
     text-align: center;
     z-index: 15;
-    margin-top: 70px;
+    margin-top: 30px;
 }
 
 .voice-wave {
