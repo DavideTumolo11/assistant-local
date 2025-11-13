@@ -261,6 +261,8 @@ class JarvisApp {
         const controlsModal = document.getElementById('controls-modal');
         const modalOverlay = document.getElementById('modal-overlay');
         const controlsClose = document.getElementById('controls-close');
+        const minimizeBtn = document.getElementById('minimize-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
 
         if (!settingsIcon || !controlsModal || !modalOverlay) {
             this.debugLog('⚠️ Modal elements not found');
@@ -287,6 +289,33 @@ class JarvisApp {
             modalOverlay.style.display = 'none';
             this.debugLog('❌ Controls modal closed (overlay)');
         });
+
+        // Setup Electron window controls
+        if (typeof require !== 'undefined') {
+            try {
+                const { ipcRenderer } = require('electron');
+
+                // Minimize window
+                if (minimizeBtn) {
+                    minimizeBtn.addEventListener('click', () => {
+                        ipcRenderer.invoke('minimize-window');
+                        this.debugLog('📦 Minimize window requested');
+                    });
+                }
+
+                // Toggle fullscreen
+                if (fullscreenBtn) {
+                    fullscreenBtn.addEventListener('click', () => {
+                        ipcRenderer.invoke('toggle-fullscreen');
+                        this.debugLog('🔲 Fullscreen toggle requested');
+                    });
+                }
+
+                this.debugLog('✅ Electron controls connected');
+            } catch (error) {
+                this.debugLog('⚠️ Electron not available:', error);
+            }
+        }
 
         this.debugLog('✅ Controls modal setup complete');
     }
