@@ -31,10 +31,13 @@ except ImportError:
     print("   Install with: pip install ollama")
 
 try:
-    from memory_semantic import SemanticMemory
+    from memory_manager import MemoryManager
+    MEMORY_AVAILABLE = True
+    print("✅ MemoryManager found")
 except ImportError:
-    print("⚠️ Warning: SemanticMemory not available, using simple memory")
-    SemanticMemory = None
+    print("⚠️ Warning: MemoryManager not available")
+    MemoryManager = None
+    MEMORY_AVAILABLE = False
 
 
 class JarvisWebSocketServer:
@@ -46,7 +49,7 @@ class JarvisWebSocketServer:
         self.ollama_model = ollama_model
         self.use_ollama = OLLAMA_AVAILABLE
         self.clients: Set[websockets.WebSocketServerProtocol] = set()
-        self.memory = SemanticMemory() if SemanticMemory else None
+        self.memory = MemoryManager() if MEMORY_AVAILABLE else None
         self.conversation_history = []
         self.start_time = datetime.now()
 
@@ -188,10 +191,29 @@ class JarvisWebSocketServer:
             current_date = now.strftime('%d/%m/%Y')
             current_time = now.strftime('%H:%M:%S')
 
+            # 🧠 RECUPERA MEMORIE RILEVANTI (se disponibile)
+            memory_context = ""
+            if self.memory:
+                try:
+                    relevant_memories = self.memory.get_relevant_memories(
+                        query=user_input,
+                        n_results=3,
+                        include_conversations=True,
+                        include_user_facts=True,
+                        include_knowledge=False  # Knowledge solo se implementiamo RAG
+                    )
+                    memory_context = self.memory.format_memories_for_prompt(relevant_memories)
+                    if memory_context:
+                        print(f"🧠 Memorie rilevanti recuperate: {len(relevant_memories.get('user_facts', []))} fatti, {len(relevant_memories.get('conversations', []))} conversazioni")
+                except Exception as e:
+                    print(f"⚠️ Error retrieving memories: {e}")
+
             # System prompt per JARVIS - MEMORIA DINAMICA
+            memory_section = f"\n\n{memory_context}" if memory_context else ""
+
             system_prompt = f"""Sei JARVIS, l'assistente AI personale (come quello di Iron Man).
 
-DATA E ORA ATTUALE: {current_date} alle {current_time}
+DATA E ORA ATTUALE: {current_date} alle {current_time}{memory_section}
 
 MEMORIA E APPRENDIMENTO:
 - Quando l'utente ti dice informazioni su di sé (nome, età, preferenze), RICORDALE
@@ -278,12 +300,40 @@ Rispondi SEMPRE in italiano."""
                 'timestamp': datetime.now().isoformat()
             })
 
-            # Salva in memoria
+            # 💾 SALVA CONVERSAZIONE IN MEMORIA PERMANENTE
             if self.memory:
                 try:
-                    self.memory.add(f"User: {user_input} | JARVIS: {accumulated_text.strip()}")
-                except:
-                    pass
+                    self.memory.save_conversation(
+                        user_message=user_input,
+                        jarvis_response=accumulated_text.strip(),
+                        metadata={'timestamp': datetime.now().isoformat()}
+                    )
+
+                    # 🔍 AUTO-ESTRAZIONE FATTI (semplice pattern matching)
+                    # Se l'utente dice "mi chiamo X", "ho X anni", ecc., salva come fatto
+                    user_lower = user_input.lower()
+                    if "mi chiamo" in user_lower or "sono" in user_lower and len(user_input.split()) < 10:
+                        # Potrebbe essere un nome
+                        for word in ["mi chiamo", "sono"]:
+                            if word in user_lower:
+                                parts = user_input.split(word, 1)
+                                if len(parts) > 1:
+                                    name = parts[1].strip().split()[0].capitalize()
+                                    if len(name) > 1 and name.isalpha():
+                                        self.memory.save_user_fact("nome", name, "personal")
+                                        print(f"👤 Fatto estratto: nome = {name}")
+
+                    if "ho" in user_lower and ("anni" in user_lower or "anno" in user_lower):
+                        # Potrebbe essere età
+                        import re
+                        age_match = re.search(r'(\d+)\s*ann', user_lower)
+                        if age_match:
+                            age = age_match.group(1)
+                            self.memory.save_user_fact("età", f"{age} anni", "personal")
+                            print(f"👤 Fatto estratto: età = {age} anni")
+
+                except Exception as e:
+                    print(f"⚠️ Error saving to memory: {e}")
 
             # Messaggio finale
             await self.send_message(websocket, {
