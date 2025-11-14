@@ -611,11 +611,6 @@ class JarvisApp {
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message jarvis-message streaming ${creativityMode ? 'creative-mode' : ''}`;
 
-            const timestamp = new Date().toLocaleTimeString('it-IT', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
             // ✅ HEADER AGGIORNATO per creatività
             const creativeBadge = creativityMode ? ' 🎨 CREATIVO' : '';
             const headerColor = creativityMode ? '#FF6B35' : '#00ff7f';
@@ -623,7 +618,7 @@ class JarvisApp {
 
             messageDiv.innerHTML = `
                 <div class="message-header" style="font-weight: bold; font-size: 11px; margin-bottom: 5px; color: ${headerColor}; text-transform: uppercase;">
-                    JARVIS${creativeBadge} - ${timestamp} - STREAMING...
+                    JARVIS${creativeBadge} - STREAMING...
                 </div>
                 <div class="streaming-content" style="line-height: 1.5; color: #ffffff; word-wrap: break-word; min-height: 20px;">
                     <span class="typing-cursor">|</span>
@@ -924,14 +919,9 @@ class JarvisApp {
             animation: fadeInUp 0.3s ease-out;
         `;
 
-        const timestamp = new Date().toLocaleTimeString('it-IT', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-
         messageDiv.innerHTML = `
             <div style="font-weight: bold; font-size: 11px; margin-bottom: 5px; color: ${borderColor}; text-transform: uppercase;">
-                ${sender} - ${timestamp}
+                ${sender}
             </div>
             <div style="line-height: 1.5; color: #ffffff; word-wrap: break-word;">
                 ${text}
