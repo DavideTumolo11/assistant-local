@@ -11,3 +11,5 @@ vosk
 pyttsx3
 numpy
 websockets
+ollama
+psutil
