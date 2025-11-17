@@ -162,7 +162,7 @@ class JarvisWebSocketServer:
         await self.generate_response_streaming(websocket, text)
 
     async def generate_response_streaming(self, websocket, user_input: str):
-        """Genera risposta AI con streaming tramite Ollama o fallback"""
+        """Genera risposta AI con streaming tramite Ollama (NESSUN FALLBACK)"""
 
         # Evento: generazione iniziata
         await self.send_message(websocket, {
@@ -177,8 +177,22 @@ class JarvisWebSocketServer:
             # USA OLLAMA per risposta intelligente
             await self.generate_with_ollama(websocket, user_input)
         else:
-            # Fallback: risposte hardcoded
-            await self.generate_with_fallback(websocket, user_input)
+            # NESSUN FALLBACK - Errore se Ollama non disponibile
+            error_msg = "❌ ERRORE: Ollama non disponibile. Assicurati che Ollama sia in esecuzione e che il modello 'mistral:latest' sia installato. Esegui: ollama pull mistral:latest"
+            print(error_msg)
+
+            await self.send_message(websocket, {
+                'type': 'error',
+                'error': error_msg
+            })
+
+            await self.send_message(websocket, {
+                'type': 'llm_event',
+                'data': {
+                    'type': 'generation_error',
+                    'data': {'error': 'Ollama not available'}
+                }
+            })
 
     async def generate_with_ollama(self, websocket, user_input: str):
         """Genera risposta usando Ollama con streaming"""
@@ -331,8 +345,21 @@ Rispondi alla prossima domanda dell'utente in modo conciso e professionale."""
 
         except Exception as e:
             print(f"❌ Ollama error: {e}")
-            # Fallback in caso di errore
-            await self.generate_with_fallback(websocket, user_input)
+            # NESSUN FALLBACK - Invia errore al frontend
+            error_msg = f"❌ ERRORE Ollama: {str(e)}\n\nVerifica:\n1. Ollama è in esecuzione? (ollama serve)\n2. Modello installato? (ollama pull mistral:latest)\n3. Driver NVIDIA aggiornati?"
+
+            await self.send_message(websocket, {
+                'type': 'error',
+                'error': error_msg
+            })
+
+            await self.send_message(websocket, {
+                'type': 'llm_event',
+                'data': {
+                    'type': 'generation_error',
+                    'data': {'error': str(e)}
+                }
+            })
 
     async def generate_with_fallback(self, websocket, user_input: str):
         """Genera risposta con logica hardcoded (fallback)"""
