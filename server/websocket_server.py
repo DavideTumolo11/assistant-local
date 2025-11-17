@@ -237,10 +237,14 @@ COMPORTAMENTO:
 - Usa il contesto della cronologia per risposte coerenti
 - Parla sempre in italiano
 
-MEMORIA:
-- Quando l'utente chiede info su se stesso (nome, età, ecc.), usa SOLO le INFORMAZIONI UTENTE sopra
-- Se non trovi l'informazione nelle INFORMAZIONI UTENTE, rispondi che non la conosci
-- NON inventare o dedurre informazioni che non sono scritte sopra
+MEMORIA - REGOLE CRITICHE:
+- Quando l'utente chiede info personali (nome, età, squadra, hobby, ecc.):
+  1. Cerca SOLO nella sezione "INFORMAZIONI UTENTE" sopra
+  2. Se l'informazione è presente, usala nella risposta
+  3. Se NON è presente, rispondi: "Non ho questa informazione in memoria"
+- NON INVENTARE MAI informazioni
+- NON DEDURRE informazioni dalle conversazioni passate
+- NON TIRARE AD INDOVINARE - solo fatti esplicitamente salvati
 
 Rispondi alla prossima domanda dell'utente in modo conciso e professionale."""
 
@@ -300,11 +304,13 @@ Rispondi alla prossima domanda dell'utente in modo conciso e professionale."""
                         metadata={'timestamp': datetime.now().isoformat()}
                     )
 
-                    # 🔍 AUTO-ESTRAZIONE FATTI (semplice pattern matching)
-                    # Se l'utente dice "mi chiamo X", "ho X anni", ecc., salva come fatto
+                    # 🔍 AUTO-ESTRAZIONE FATTI (pattern matching avanzato)
+                    # Estrae automaticamente: nome, età, squadra, hobby, preferenze
                     user_lower = user_input.lower()
-                    if "mi chiamo" in user_lower or "sono" in user_lower and len(user_input.split()) < 10:
-                        # Potrebbe essere un nome
+                    import re
+
+                    # NOME: "mi chiamo X", "sono X"
+                    if "mi chiamo" in user_lower or ("sono" in user_lower and len(user_input.split()) < 10):
                         for word in ["mi chiamo", "sono"]:
                             if word in user_lower:
                                 parts = user_input.split(word, 1)
@@ -314,14 +320,41 @@ Rispondi alla prossima domanda dell'utente in modo conciso e professionale."""
                                         self.memory.save_user_fact("nome", name, "personal")
                                         print(f"👤 Fatto estratto: nome = {name}")
 
+                    # ETÀ: "ho X anni"
                     if "ho" in user_lower and ("anni" in user_lower or "anno" in user_lower):
-                        # Potrebbe essere età
-                        import re
                         age_match = re.search(r'(\d+)\s*ann', user_lower)
                         if age_match:
                             age = age_match.group(1)
                             self.memory.save_user_fact("età", f"{age} anni", "personal")
                             print(f"👤 Fatto estratto: età = {age} anni")
+
+                    # SQUADRA: "tifo X", "sono tifoso del/della X"
+                    tifo_patterns = [
+                        r'tifo\s+(\w+)',
+                        r'tifoso\s+(?:del|della|dell\')\s*(\w+)',
+                        r'tifosa\s+(?:del|della|dell\')\s*(\w+)'
+                    ]
+                    for pattern in tifo_patterns:
+                        match = re.search(pattern, user_lower)
+                        if match:
+                            squadra = match.group(1).capitalize()
+                            self.memory.save_user_fact("squadra", squadra, "preferences")
+                            print(f"👤 Fatto estratto: squadra = {squadra}")
+                            break
+
+                    # HOBBY/SPORT: "mi piace X", "amo X"
+                    hobby_patterns = [
+                        r'mi piace(?:\s+il|\s+la|\s+lo)?\s+(\w+)',
+                        r'amo\s+(?:il|la|lo)?\s*(\w+)'
+                    ]
+                    for pattern in hobby_patterns:
+                        match = re.search(pattern, user_lower)
+                        if match:
+                            hobby = match.group(1).lower()
+                            # Solo se è un hobby comune (non parole generiche)
+                            if hobby in ['calcio', 'basket', 'tennis', 'nuoto', 'pallavolo', 'musica', 'cinema', 'lettura', 'cucina', 'viaggi']:
+                                self.memory.save_user_fact("hobby", hobby, "preferences")
+                                print(f"👤 Fatto estratto: hobby = {hobby}")
 
                 except Exception as e:
                     print(f"⚠️ Error saving to memory: {e}")
