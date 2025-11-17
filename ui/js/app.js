@@ -97,6 +97,9 @@ class JarvisApp {
             this.debugLog('📋 Setting up DOM elements...');
             this.setupElements();
 
+            this.debugLog('📊 Animating loading progress...');
+            this.animateLoadingProgress();
+
             this.debugLog('✨ Setting up particles...');
             this.setupParticles();
 
@@ -113,7 +116,7 @@ class JarvisApp {
             this.hideLoadingOverlay();
 
             this.debugLog('✅ Jarvis Frontend initialized successfully');
-            this.showNotification('J.A.R.V.I.S Interface Online - CREATIVE Streaming Ready', 'success');
+            this.showNotification('J.A.R.V.I.S online', 'success');
 
         } catch (error) {
             this.debugLog('❌ Error initializing Jarvis Frontend:', error);
@@ -131,7 +134,6 @@ class JarvisApp {
             memoryUsage: document.getElementById('memory-usage'),
             voiceStatus: document.getElementById('voice-status'),
             aiModel: document.getElementById('ai-model'),
-            backendStatus: document.getElementById('backend-status'),
             wsStatus: document.getElementById('ws-status'),
 
             // Control buttons
@@ -146,11 +148,8 @@ class JarvisApp {
             chatSend: document.getElementById('chat-send'),
             chatMessages: document.getElementById('chat-messages'),
 
-            // Progress squares
-            cpuProgress: document.getElementById('cpu-progress'),
-            memoryProgress: document.getElementById('memory-progress'),
-            networkProgress: document.getElementById('network-progress'),
-            aiProgress: document.getElementById('ai-progress'),
+            // Voice activity
+            voiceActivity: document.querySelector('.voice-activity'),
 
             // Loading
             loadingOverlay: document.getElementById('loading-overlay'),
@@ -242,10 +241,80 @@ class JarvisApp {
         // Chat functionality
         this.setupChatEventListeners();
 
+        // Setup controls modal
+        this.setupControlsModal();
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
 
         this.debugLog('🎛️ Event listeners setup complete');
+    }
+
+    /**
+     * SETUP CONTROLS MODAL
+     */
+    setupControlsModal() {
+        const settingsIcon = document.getElementById('settings-icon');
+        const controlsModal = document.getElementById('controls-modal');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const controlsClose = document.getElementById('controls-close');
+        const minimizeBtn = document.getElementById('minimize-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+        if (!settingsIcon || !controlsModal || !modalOverlay) {
+            this.debugLog('⚠️ Modal elements not found');
+            return;
+        }
+
+        // Apri modal
+        settingsIcon.addEventListener('click', () => {
+            controlsModal.style.display = 'block';
+            modalOverlay.style.display = 'block';
+            this.debugLog('⚙️ Controls modal opened');
+        });
+
+        // Chiudi modal (pulsante X)
+        controlsClose?.addEventListener('click', () => {
+            controlsModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+            this.debugLog('❌ Controls modal closed');
+        });
+
+        // Chiudi modal (click su overlay)
+        modalOverlay.addEventListener('click', () => {
+            controlsModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+            this.debugLog('❌ Controls modal closed (overlay)');
+        });
+
+        // Setup Electron window controls (SECURE via contextBridge)
+        if (window.electronAPI) {
+            try {
+                // Minimize window
+                if (minimizeBtn) {
+                    minimizeBtn.addEventListener('click', () => {
+                        window.electronAPI.minimizeWindow();
+                        this.debugLog('📦 Minimize window requested');
+                    });
+                }
+
+                // Toggle fullscreen
+                if (fullscreenBtn) {
+                    fullscreenBtn.addEventListener('click', () => {
+                        window.electronAPI.toggleFullscreen();
+                        this.debugLog('🔲 Fullscreen toggle requested');
+                    });
+                }
+
+                this.debugLog('✅ Electron controls connected (SECURE)');
+            } catch (error) {
+                this.debugLog('⚠️ Electron API error:', error);
+            }
+        } else {
+            this.debugLog('⚠️ Electron API not available');
+        }
+
+        this.debugLog('✅ Controls modal setup complete');
     }
 
     /**
@@ -291,7 +360,7 @@ class JarvisApp {
                 }
 
                 // Aggiungi messaggio utente
-                this.addChatMessage('USER', message);
+                this.addChatMessage('TU', message);
 
                 // Invia al backend
                 this.sendWebSocketMessageWithRetry('text_command', { text: message });
@@ -334,7 +403,7 @@ class JarvisApp {
                 this.debugLog('✅ WebSocket connected successfully');
                 this.state.connected = true;
                 this.updateConnectionStatus(true);
-                this.showNotification('Connected to Jarvis Core - CREATIVE Streaming Active', 'success');
+                this.showNotification('Connesso a JARVIS', 'success');
             };
 
             this.websocket.onmessage = (event) => {
@@ -439,17 +508,9 @@ class JarvisApp {
                     this.debugLog('🔗 Connection established:', message.message);
                     this.addChatMessage('SYSTEM', `Connected: ${message.message}`);
 
-                    // ✅ NUOVO - Log features creative
+                    // Log features (senza notifiche)
                     if (message.features) {
                         this.debugLog('✨ Server features:', message.features);
-
-                        if (message.features.creative_mode) {
-                            this.showNotification('🎨 Modalità creativa ATTIVA - Risposte più varie!', 'info', 5000);
-                        }
-
-                        if (message.features.stable_streaming) {
-                            this.showNotification('📡 Streaming STABILE attivo - Zero disconnessioni!', 'success', 4000);
-                        }
                     }
                     break;
 
@@ -477,7 +538,7 @@ class JarvisApp {
 
                 case 'system_status':
                     this.debugLog('📊 System status update:', message.status);
-                    this.updateSystemMetrics(message);
+                    this.updateSystemMetrics(message.status);
                     break;
 
                 case 'llm_status':
@@ -504,19 +565,16 @@ class JarvisApp {
 
         switch (eventType) {
             case 'generation_started':
-                this.showNotification('🎨 Generazione creativa avviata...', 'info', 2000);
+                this.debugLog('🎨 Generation started');
                 break;
 
             case 'generation_completed':
                 const creativity = eventData.data.creativity_score || 0;
                 this.debugLog('🎯 Creativity score:', creativity.toFixed(2));
-                if (creativity > 0.8) {
-                    this.showNotification(`✨ Risposta molto creativa! (${creativity.toFixed(2)})`, 'success', 3000);
-                }
                 break;
 
             case 'generation_error':
-                this.showNotification('❌ Errore nella generazione AI', 'error');
+                this.showNotification('Errore nella risposta', 'error');
                 if (this.streamingState.isStreaming) {
                     this.forceResetStreaming();
                 }
@@ -524,10 +582,7 @@ class JarvisApp {
 
             case 'llm_initialized':
                 const features = eventData.data;
-                this.debugLog('🧠 LLM Creative Features:', features);
-                if (features.creativity_mode === 'HIGH') {
-                    this.showNotification('🎨 Modalità creatività ALTA attivata', 'info', 4000);
-                }
+                this.debugLog('🧠 LLM Features:', features);
                 break;
         }
     }
@@ -607,18 +662,22 @@ class JarvisApp {
             this.streamingState.accumulatedText = '';  // ✅ RESET accumulator
             this.streamingState.chunkCount = 0;        // ✅ RESET chunk counter
 
-            // Crea elemento messaggio con indicatori creativi
+            // Crea elemento messaggio semplice (senza badge tecnici)
             const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message jarvis-message streaming ${creativityMode ? 'creative-mode' : ''}`;
+            messageDiv.className = `chat-message jarvis-message streaming`;
 
-            // ✅ HEADER AGGIORNATO per creatività
-            const creativeBadge = creativityMode ? ' 🎨 CREATIVO' : '';
-            const headerColor = creativityMode ? '#FF6B35' : '#00ff7f';
-            const bgColor = creativityMode ? 'rgba(255, 107, 53, 0.1)' : 'rgba(0, 255, 127, 0.1)';
+            const timestamp = new Date().toLocaleTimeString('it-IT', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // Header semplice - solo JARVIS
+            const headerColor = '#00ff7f';
+            const bgColor = 'rgba(0, 255, 127, 0.1)';
 
             messageDiv.innerHTML = `
-                <div class="message-header" style="font-weight: bold; font-size: 11px; margin-bottom: 5px; color: ${headerColor}; text-transform: uppercase;">
-                    JARVIS${creativeBadge} - STREAMING...
+                <div class="message-header" style="font-weight: bold; font-size: 11px; margin-bottom: 5px; color: ${headerColor};">
+                    JARVIS - ${timestamp}
                 </div>
                 <div class="streaming-content" style="line-height: 1.5; color: #ffffff; word-wrap: break-word; min-height: 20px;">
                     <span class="typing-cursor">|</span>
@@ -626,13 +685,12 @@ class JarvisApp {
             `;
 
             messageDiv.style.cssText = `
-                margin-bottom: 15px; 
-                padding: 12px 15px; 
-                border-radius: 12px; 
-                background: ${bgColor}; 
+                margin-bottom: 15px;
+                padding: 12px 15px;
+                border-radius: 12px;
+                background: ${bgColor};
                 border-left: 3px solid ${headerColor};
                 animation: fadeInUp 0.3s ease-out;
-                ${creativityMode ? 'box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);' : ''}
             `;
 
             this.elements.chatMessages.appendChild(messageDiv);
@@ -698,7 +756,7 @@ class JarvisApp {
      */
     completeStreamingMessageRobust(creativityMode = false) {
         try {
-            this.debugLog('🏁 Completing CREATIVE streaming message...');
+            this.debugLog('🏁 Completing streaming message...');
 
             if (this.streamingState.currentMessageElement) {
                 // Rimuovi typing cursor
@@ -708,15 +766,8 @@ class JarvisApp {
                     contentDiv.textContent = currentText;
                 }
 
-                // ✅ AGGIORNA HEADER CON STATISTICHE CREATIVE
-                const headerDiv = this.streamingState.currentMessageElement.querySelector('.message-header');
-                if (headerDiv) {
-                    const streamDuration = ((Date.now() - this.streamingState.streamStartTime) / 1000).toFixed(1);
-                    const creativeBadge = creativityMode ? ' 🎨' : '';
-                    const stats = `COMPLETED${creativeBadge} (${streamDuration}s, ${this.streamingState.chunkCount} chunks, ${this.streamingState.totalCharsReceived} chars)`;
-
-                    headerDiv.innerHTML = headerDiv.innerHTML.replace('STREAMING...', stats);
-                }
+                // Header resta invariato (nessuna statistica)
+                // Già mostra solo "JARVIS - HH:MM"
 
                 // Rimuovi classe streaming
                 this.streamingState.currentMessageElement.classList.remove('streaming');
@@ -724,13 +775,6 @@ class JarvisApp {
 
             // Reset stato completo
             this.resetStreamingState();
-
-            // ✅ NOTIFICA COMPLETAMENTO CREATIVE
-            const completionMessage = creativityMode
-                ? `✨ Risposta creativa completata (${this.streamingState.chunkCount} chunks)`
-                : `✅ Risposta completata`;
-
-            this.showNotification(completionMessage, 'success', 3000);
 
             this.debugLog('✅ CREATIVE streaming message completed');
 
@@ -919,9 +963,14 @@ class JarvisApp {
             animation: fadeInUp 0.3s ease-out;
         `;
 
+        const timestamp = new Date().toLocaleTimeString('it-IT', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
         messageDiv.innerHTML = `
             <div style="font-weight: bold; font-size: 11px; margin-bottom: 5px; color: ${borderColor}; text-transform: uppercase;">
-                ${sender}
+                ${sender} - ${timestamp}
             </div>
             <div style="line-height: 1.5; color: #ffffff; word-wrap: break-word;">
                 ${text}
@@ -978,42 +1027,39 @@ class JarvisApp {
                 this.elements.wsStatus.classList.remove('connected');
             }
         }
-
-        if (this.elements.backendStatus) {
-            // ✅ AGGIORNATO per creatività
-            const statusText = connected
-                ? 'Connected - CREATIVE Streaming'
-                : 'Disconnected';
-
-            this.elements.backendStatus.textContent = statusText;
-            this.elements.backendStatus.style.color = connected ? '#00ff7f' : '#ff4757';
-        }
     }
 
     /**
-     * ✅ NUOVO - UPDATE SYSTEM METRICS
+     * ✅ UPDATE SYSTEM METRICS - Con dati reali
      */
     updateSystemMetrics(statusData) {
         try {
-            // Update performance display se elementi esistono
-            const metrics = {
-                'uptime': statusData.uptime_formatted || 'N/A',
-                'clients': statusData.connected_clients || 0,
-                'messages': statusData.statistics?.messages_processed || 0,
-                'chunks': statusData.statistics?.streaming_chunks_sent || 0
-            };
-
-            Object.keys(metrics).forEach(key => {
-                const element = document.getElementById(`metric-${key}`);
-                if (element) {
-                    element.textContent = metrics[key];
-                }
-            });
-
-            // Update creativity stats se disponibili
-            if (statusData.creativity_stats) {
-                this.debugLog('🎨 Creativity stats update:', statusData.creativity_stats);
+            // Update CPU usage
+            if (this.elements.cpuUsage && statusData.cpu_usage !== undefined) {
+                this.elements.cpuUsage.textContent = `${statusData.cpu_usage}%`;
             }
+
+            // Update Memory usage
+            if (this.elements.memoryUsage && statusData.memory_usage !== undefined) {
+                this.elements.memoryUsage.textContent = `${statusData.memory_usage}%`;
+            }
+
+            // Update Voice status
+            if (this.elements.voiceStatus && statusData.voice_status) {
+                this.elements.voiceStatus.textContent = statusData.voice_status;
+            }
+
+            // Update AI Model
+            if (this.elements.aiModel && statusData.ai_model) {
+                this.elements.aiModel.textContent = statusData.ai_model.toUpperCase();
+            }
+
+            this.debugLog('📊 System metrics updated:', {
+                cpu: statusData.cpu_usage,
+                memory: statusData.memory_usage,
+                voice: statusData.voice_status,
+                model: statusData.ai_model
+            });
 
         } catch (error) {
             this.debugLog('❌ Error updating system metrics:', error);
@@ -1130,10 +1176,34 @@ class JarvisApp {
     }
 
     /**
+     * ✅ ANIMA PROGRESS BAR INIZIALE
+     */
+    animateLoadingProgress() {
+        // Anima solo la barra di progresso iniziale
+        if (this.elements.loadingProgress) {
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15 + 10; // Incrementa tra 10-25%
+                if (progress >= 95) {
+                    progress = 95; // Fermati al 95%, completa al 100% quando tutto è pronto
+                    clearInterval(progressInterval);
+                }
+                this.elements.loadingProgress.style.width = `${progress}%`;
+                this.debugLog(`📊 Loading progress: ${progress.toFixed(0)}%`);
+            }, 200);
+        }
+    }
+
+    /**
      * HIDE LOADING OVERLAY - TESTATO
      */
     hideLoadingOverlay() {
         if (this.elements.loadingOverlay) {
+            // Completa la progress bar al 100%
+            if (this.elements.loadingProgress) {
+                this.elements.loadingProgress.style.width = '100%';
+            }
+
             setTimeout(() => {
                 this.elements.loadingOverlay.style.opacity = '0';
                 setTimeout(() => {

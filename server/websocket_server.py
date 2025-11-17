@@ -162,7 +162,7 @@ class JarvisWebSocketServer:
         await self.generate_response_streaming(websocket, text)
 
     async def generate_response_streaming(self, websocket, user_input: str):
-        """Genera risposta AI con streaming tramite Ollama (NESSUN FALLBACK)"""
+        """Genera risposta AI con streaming tramite Ollama o fallback"""
 
         # Evento: generazione iniziata
         await self.send_message(websocket, {
@@ -177,22 +177,8 @@ class JarvisWebSocketServer:
             # USA OLLAMA per risposta intelligente
             await self.generate_with_ollama(websocket, user_input)
         else:
-            # NESSUN FALLBACK - Errore se Ollama non disponibile
-            error_msg = "❌ ERRORE: Ollama non disponibile. Assicurati che Ollama sia in esecuzione e che il modello 'mistral:latest' sia installato. Esegui: ollama pull mistral:latest"
-            print(error_msg)
-
-            await self.send_message(websocket, {
-                'type': 'error',
-                'error': error_msg
-            })
-
-            await self.send_message(websocket, {
-                'type': 'llm_event',
-                'data': {
-                    'type': 'generation_error',
-                    'data': {'error': 'Ollama not available'}
-                }
-            })
+            # Fallback: risposte hardcoded
+            await self.generate_with_fallback(websocket, user_input)
 
     async def generate_with_ollama(self, websocket, user_input: str):
         """Genera risposta usando Ollama con streaming"""
@@ -222,23 +208,61 @@ class JarvisWebSocketServer:
                 except Exception as e:
                     print(f"⚠️ Error retrieving memories: {e}")
 
-            # System prompt per JARVIS - SEMPLIFICATO
+            # System prompt per JARVIS - MEMORIA DINAMICA
             memory_section = f"\n\n{memory_context}" if memory_context else ""
 
-            system_prompt = f"""Sei JARVIS, l'assistente AI personale di Iron Man.
+            system_prompt = f"""Sei JARVIS, l'assistente AI personale (come quello di Iron Man).
 
 DATA E ORA ATTUALE: {current_date} alle {current_time}{memory_section}
 
-COMPORTAMENTO:
-- Risposte brevi e professionali (massimo 2-3 frasi)
-- Tono calmo e competente come JARVIS del film
-- Rispondi SOLO alla domanda dell'utente, non aggiungere altro
-- NON mettere MAI timestamp o orari nelle risposte (solo se l'utente chiede "che ore sono")
-- Usa il contesto della cronologia per risposte coerenti
-- Se l'utente ti dice informazioni personali (nome, età, ecc.), ricordale per dopo
-- Parla sempre in italiano
+MEMORIA E APPRENDIMENTO:
+- Quando l'utente ti dice informazioni su di sé (nome, età, preferenze), RICORDALE
+- Quando l'utente chiede "quanti anni ho" o info su di sé, rispondi in base a ciò che TI HA DETTO
+- Se non conosci un'informazione, dillo onestamente e chiedi di fornirtela
+- Apprendi dalle conversazioni e usa il contesto della cronologia
 
-Rispondi alla prossima domanda dell'utente in modo conciso e professionale."""
+REGOLE FONDAMENTALI:
+- Risposte concise ma complete (2-4 frasi max)
+- Rispondi SEMPRE alle domande specifiche dell'utente
+- NON inventare informazioni che non conosci
+- NON ripetere sempre "Come posso assisterti" - varia le conclusioni
+- ⚠️ IMPORTANTE: NON mettere MAI orario/timestamp nelle risposte normali
+- L'orario si dice SOLO se l'utente chiede "che ore sono?"
+- Tono professionale, calmo e competente (come JARVIS di Iron Man)
+- Parla in prima persona come JARVIS
+- NON dire mai "sono un programma" o "non ho emozioni"
+
+ESEMPI CORRETTI (SENZA timestamp):
+User: ciao
+JARVIS: Buongiorno. Tutti i sistemi operativi.
+
+User: come stai?
+JARVIS: Tutti i sistemi funzionanti, pronto ad assisterti.
+
+User: ciao, mi chiamo Marco
+JARVIS: Piacere di conoscerti, Marco.
+
+User: ho 25 anni
+JARVIS: Ho registrato la tua età.
+
+User: quanti anni ho?
+JARVIS: [Cerca nella memoria e rispondi con l'età]
+
+User: come mi chiamo?
+JARVIS: [Cerca nella memoria e rispondi con il nome]
+
+User: come ti chiami?
+JARVIS: Sono JARVIS, il tuo assistente personale.
+
+ESEMPIO SBAGLIATO (NON FARE MAI):
+User: ciao
+JARVIS: Buongiorno alle 14:30:15 ❌ SBAGLIATO!
+
+SOLO quando chiede l'ora:
+User: che ore sono?
+JARVIS: Sono le {current_time}.
+
+Rispondi SEMPRE in italiano."""
 
             # Aggiungi cronologia recente (ultimi 10 messaggi)
             recent_history = self.conversation_history[-10:] if len(self.conversation_history) > 0 else []
@@ -345,21 +369,8 @@ Rispondi alla prossima domanda dell'utente in modo conciso e professionale."""
 
         except Exception as e:
             print(f"❌ Ollama error: {e}")
-            # NESSUN FALLBACK - Invia errore al frontend
-            error_msg = f"❌ ERRORE Ollama: {str(e)}\n\nVerifica:\n1. Ollama è in esecuzione? (ollama serve)\n2. Modello installato? (ollama pull mistral:latest)\n3. Driver NVIDIA aggiornati?"
-
-            await self.send_message(websocket, {
-                'type': 'error',
-                'error': error_msg
-            })
-
-            await self.send_message(websocket, {
-                'type': 'llm_event',
-                'data': {
-                    'type': 'generation_error',
-                    'data': {'error': str(e)}
-                }
-            })
+            # Fallback in caso di errore
+            await self.generate_with_fallback(websocket, user_input)
 
     async def generate_with_fallback(self, websocket, user_input: str):
         """Genera risposta con logica hardcoded (fallback)"""

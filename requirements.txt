@@ -1,9 +1,13 @@
+websockets
+ollama
+psutil
 fastapi
 uvicorn
 requests
 langchain
 llama-index
 chromadb
+sentence-transformers
 faiss-cpu
 python-dotenv
 sounddevice

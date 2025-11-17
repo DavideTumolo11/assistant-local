@@ -1,13 +1,17 @@
+' ============================================
+' J.A.R.V.I.S - AVVIO STEALTH (INVISIBILE)
+' ============================================
+
 Set WshShell = CreateObject("WScript.Shell")
+Set fso = CreateObject("Scripting.FileSystemObject")
 
-' Percorso base del progetto
-projectPath = "C:\Users\Davide\assistant-local"
+' Ottieni la cartella dove si trova questo file .vbs
+scriptFolder = fso.GetParentFolderName(WScript.ScriptFullName)
 
-' Attiva il virtual environment e avvia il server WebSocket in background (invisibile)
-WshShell.Run "cmd /c cd /d " & projectPath & " && call .venv\Scripts\activate && python server\websocket_server.py", 0, False
+' Avvia start_jarvis_silent.bat (versione ottimizzata per stealth)
+' Parametro 0 = finestra nascosta, False = non aspettare
+WshShell.Run "cmd.exe /c """ & scriptFolder & "\start_jarvis_silent.bat""", 0, False
 
-' Attendi qualche secondo per permettere al server WebSocket di partire
-WScript.Sleep 3000
-
-' Avvia l'interfaccia Electron (VISIBILE - parametro 1 invece di 0)
-WshShell.Run "cmd /c cd /d " & projectPath & " && npm start", 1, False
+' Per fermare JARVIS in modalità stealth:
+' - Esegui stop_jarvis.bat
+' - OPPURE apri Task Manager (Ctrl+Shift+Esc) e chiudi python.exe ed electron.exe
