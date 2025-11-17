@@ -32,7 +32,7 @@ class JarvisApp {
                 cpu: 0,
                 memory: 0,
                 voiceStatus: 'READY',
-                aiModel: 'MISTRAL-7B'
+                aiModel: 'LLAMA3.1-8B'
             }
         };
 

@@ -43,7 +43,7 @@ except ImportError:
 class JarvisWebSocketServer:
     """Server WebSocket per JARVIS AI Assistant"""
 
-    def __init__(self, host='localhost', port=8765, ollama_model='mistral:latest'):
+    def __init__(self, host='localhost', port=8765, ollama_model='llama3.1:8b'):
         self.host = host
         self.port = port
         self.ollama_model = ollama_model
@@ -178,7 +178,7 @@ class JarvisWebSocketServer:
             await self.generate_with_ollama(websocket, user_input)
         else:
             # NESSUN FALLBACK - Errore se Ollama non disponibile
-            error_msg = "❌ ERRORE: Ollama non disponibile. Assicurati che Ollama sia in esecuzione e che il modello 'mistral:latest' sia installato. Esegui: ollama pull mistral:latest"
+            error_msg = "❌ ERRORE: Ollama non disponibile. Assicurati che Ollama sia in esecuzione e che il modello 'llama3.1:8b' sia installato. Esegui: ollama pull llama3.1:8b"
             print(error_msg)
 
             await self.send_message(websocket, {
@@ -273,7 +273,7 @@ Rispondi alla prossima domanda dell'utente in modo conciso e professionale."""
             # Aggiungi messaggio corrente SENZA context info (è già nel system prompt)
             messages.append({'role': 'user', 'content': user_input})
 
-            # Chiamata a Ollama - usa parametri default di Mistral (ottimizzati)
+            # Chiamata a Ollama - usa parametri default di Llama3.1 (ottimizzati)
             accumulated_text = ""
             chunk_count = 0
 
@@ -398,7 +398,7 @@ Rispondi alla prossima domanda dell'utente in modo conciso e professionale."""
         except Exception as e:
             print(f"❌ Ollama error: {e}")
             # NESSUN FALLBACK - Invia errore al frontend
-            error_msg = f"❌ ERRORE Ollama: {str(e)}\n\nVerifica:\n1. Ollama è in esecuzione? (ollama serve)\n2. Modello installato? (ollama pull mistral:latest)\n3. Driver NVIDIA aggiornati?"
+            error_msg = f"❌ ERRORE Ollama: {str(e)}\n\nVerifica:\n1. Ollama è in esecuzione? (ollama serve)\n2. Modello installato? (ollama pull llama3.1:8b)\n3. Driver NVIDIA aggiornati?"
 
             await self.send_message(websocket, {
                 'type': 'error',
