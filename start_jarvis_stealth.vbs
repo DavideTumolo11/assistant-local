@@ -11,9 +11,11 @@ scriptFolder = fso.GetParentFolderName(WScript.ScriptFullName)
 ' Cambia directory al progetto
 WshShell.CurrentDirectory = scriptFolder
 
-' Avvia il server WebSocket in background (invisibile)
+' Avvia il server WebSocket usando Python del venv (senza attivare il venv)
 ' Parametro 0 = finestra nascosta, False = non aspettare
-WshShell.Run "cmd.exe /c cd /d """ & scriptFolder & """ && call .venv\Scripts\activate && python server\websocket_server.py", 0, False
+pythonPath = scriptFolder & "\.venv\Scripts\python.exe"
+serverScript = scriptFolder & "\server\websocket_server.py"
+WshShell.Run """" & pythonPath & """ """ & serverScript & """", 0, False
 
 ' Attendi 3 secondi per permettere al server di avviarsi
 WScript.Sleep 3000
