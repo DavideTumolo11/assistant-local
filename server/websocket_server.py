@@ -315,10 +315,13 @@ Rispondi alla prossima domanda dell'utente in modo conciso e professionale."""
                             if word in user_lower:
                                 parts = user_input.split(word, 1)
                                 if len(parts) > 1:
-                                    name = parts[1].strip().split()[0].capitalize()
+                                    # Estrai prima parola e rimuovi punteggiatura
+                                    name_raw = parts[1].strip().split()[0]
+                                    name = re.sub(r'[^\w]', '', name_raw).capitalize()
                                     if len(name) > 1 and name.isalpha():
                                         self.memory.save_user_fact("nome", name, "personal")
                                         print(f"👤 Fatto estratto: nome = {name}")
+                                        break
 
                     # ETÀ: "ho X anni"
                     if "ho" in user_lower and ("anni" in user_lower or "anno" in user_lower):
